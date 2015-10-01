@@ -1,6 +1,13 @@
 package com.github.eclipsegraphviz.debugview;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.core.model.IVariable;
@@ -11,6 +18,7 @@ import org.eclipse.jdt.debug.core.IJavaValue;
 import org.eclipse.jdt.internal.debug.ui.JDIModelPresentation;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
@@ -25,50 +33,14 @@ import org.eclipse.ui.PlatformUI;
 import com.abstratt.imageviewer.DefaultGraphicalContentProvider;
 import com.abstratt.imageviewer.GraphicalView;
 
-
-
 public class DebugListener implements ISelectionListener, IPartListener2 {
-
-	private class RenderRunnable implements Runnable {
-
-		private GraphicalView gview;
-		private IJavaObject debugObject;
-
-		public RenderRunnable(GraphicalView gview, IJavaObject debugObject) {
-			super();
-			this.gview = gview;
-			this.debugObject = debugObject;
-		}
-
-
-		@Override
-		public void run() {
-			IJavaThread thread = JDIModelPresentation.getEvaluationThread((IJavaDebugTarget) debugObject.getDebugTarget());
-			IJavaValue toStringValue = null;
-			try {
-				toStringValue = debugObject.sendMessage(JDI_OBJECT_TO_DOT, "()Ljava/lang/String;", null, thread, false);
-			} catch (DebugException e) {
-				//Silently return
-				return;
-			}
-			String details = null;
-			try {
-				details  = toStringValue.getValueString();
-			} catch (DebugException e) {
-				return;
-			}
-			if (details != null) {
-				gview.setAutoSync(false);
-				gview.setContents(details.getBytes(), new DefaultGraphicalContentProvider());
-	        }
-
-		}
-
-	}
+	
+	private GraphicalView graphvizView; 
 
 	private final String GRAPHVIZ_VIEW_PART_ID = "com.abstratt.imageviewer.GraphicalView";
 	private final String DEBUG_VIEW_PART_ID = "org.eclipse.debug.ui.VariableView";
 	public static String JDI_OBJECT_TO_DOT = "toDOT";
+	public final QualifiedName details =  new QualifiedName("com.github.eclipsegraphviz.debugview", "dotString");
 
 	public DebugListener() {
 		super();
@@ -108,15 +80,50 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 	}
 
 	private void renderDotString(IJavaObject input) {
-		String details = null;
-		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-		IViewPart view = page.findView(GRAPHVIZ_VIEW_PART_ID);
-		if (view != null) {
-			GraphicalView gview = (GraphicalView) view;
-			Thread dotThread = new Thread(this.new RenderRunnable(gview, input));
-			dotThread.start();
+		if (graphvizView != null) {
+			final Job job = new Job("Graphviz Debug Query") {
+				
+		        protected IStatus run(IProgressMonitor monitor) {
+		        	IJavaThread thread = JDIModelPresentation.getEvaluationThread((IJavaDebugTarget) input.getDebugTarget());
+					IJavaValue toStringValue = null;
+					try {
+						toStringValue = input.sendMessage(JDI_OBJECT_TO_DOT, "()Ljava/lang/String;", null, thread, false);
+					} catch (DebugException e) {
+						// Silently ignore exceptions
+						return Status.OK_STATUS;
+					}
+					try {
+						setProperty(details, toStringValue.getValueString());
+					} catch (DebugException e) {
+						// Silently ignore exceptions
+					}
+					return Status.OK_STATUS;
+		        }
+		     };
+		  job.addJobChangeListener(new JobChangeAdapter() {
+		        public void done(IJobChangeEvent event) {
+		        if (event.getResult().isOK()) {
+		        	syncWithUi(event);
+		        }
+//		        else
+//		        	postError("Job did not complete successfully");
+		        }
+		     });
+		  	job.setSystem(true);
+		  	job.schedule(); // start as soon as possible
 		}
 	}
+	
+    private void syncWithUi(IJobChangeEvent event) {
+	    Display.getDefault().asyncExec(new Runnable() {
+	    	public void run() {
+	    		graphvizView.setAutoSync(false);
+	        	String dotString = (String) event.getJob().getProperty(details);
+	        	graphvizView.setContents(dotString.getBytes(), new DefaultGraphicalContentProvider());
+	    	}
+	    });
+
+	  }
 
 	/**
 	 * @return
@@ -139,9 +146,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 		// We are only interested in debug window selection
-		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-		IViewPart view = page.findView(DEBUG_VIEW_PART_ID);
-		if (view != part)
+//		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+//		IViewPart view = page.findView(DEBUG_VIEW_PART_ID);
+		if (graphvizView != part)
 			return;
 		if (!(selection instanceof IStructuredSelection))
 			return;
@@ -168,54 +175,71 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	@Override
 	public void partActivated(IWorkbenchPartReference partRef) {
-		// TODO Auto-generated method stub
+		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+			graphvizView = (GraphicalView) partRef.getPart(false);
+			installSelectionListener();
+		}
 
 	}
 
 	@Override
 	public void partBroughtToTop(IWorkbenchPartReference partRef) {
-		// TODO Auto-generated method stub
+		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+			graphvizView = (GraphicalView) partRef.getPart(false);
+			installSelectionListener();
+		}
 
 	}
 
 	@Override
 	public void partClosed(IWorkbenchPartReference partRef) {
-		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID))
+		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+			graphvizView = null;
 			removeSelectionListener();
+		}
+			
 	}
 
 	@Override
 	public void partDeactivated(IWorkbenchPartReference partRef) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void partOpened(IWorkbenchPartReference partRef) {
-		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID))
+		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+			graphvizView = (GraphicalView) partRef.getPart(false);
 			installSelectionListener();
+		}
+			
 	}
 
 	@Override
 	public void partHidden(IWorkbenchPartReference partRef) {
-		// TODO Auto-generated method stub
-
+		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+			graphvizView = (GraphicalView) partRef.getPart(false);
+			removeSelectionListener();
+		}
 	}
 
 	@Override
 	public void partVisible(IWorkbenchPartReference partRef) {
-		// TODO Auto-generated method stub
+		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+			graphvizView = (GraphicalView) partRef.getPart(false);
+			installSelectionListener();
+		}
 
 	}
 
 	@Override
 	public void partInputChanged(IWorkbenchPartReference partRef) {
-		// TODO Auto-generated method stub
-
+		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+			graphvizView = (GraphicalView) partRef.getPart(false);
+			installSelectionListener();
+		}
 	}
 
 	public void dispose() {
-		removeSelectionListener();
 		removeViewListener();
 	}
 
