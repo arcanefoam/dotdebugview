@@ -80,7 +80,6 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 			ISelectionService ss = getSelectionService();
 			if (ss != null) {
 				ss.addSelectionListener(this);
-				System.out.println("Selection Listener installed.");
 				selListenerReady = true;
 			}
 		}
@@ -113,6 +112,7 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 							setProperty(details, toStringValue.getValueString());
 						} catch (DebugException e) {
 							// Silently ignore exceptions
+							return Status.CANCEL_STATUS;
 						}
 					} else {
 						return Status.CANCEL_STATUS;
@@ -125,9 +125,7 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 			        if (event.getResult().isOK()) {
 			        	syncWithUi(event);
 			        }
-	//		        else
-	//		        	postError("Job did not complete successfully");
-			        }
+			    }
 		     });
 		  	job.setSystem(true);
 		  	job.schedule(); // start as soon as possible
