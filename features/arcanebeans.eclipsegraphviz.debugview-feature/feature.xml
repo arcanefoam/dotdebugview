@@ -3,7 +3,7 @@
       id="arcanebeans.eclipsegraphviz.debugview.feature"
       label="DOTDebugView-feature"
       version="1.0.0.qualifier"
-      provider-name="arcanefoam@gmail.com">
+      provider-name="Horacio Hoyos">
 
    <description>
       Allows classes that provide a toDOT() method to be rendered into

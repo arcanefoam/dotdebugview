@@ -4,7 +4,7 @@ Bundle-Name: DOTDebugView
 Bundle-SymbolicName: arcanebeans.eclipsegraphviz.debugview;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: arcanebeans.eclipsegraphviz.debugview.Activator
-Bundle-Vendor: arcanefoam@gmail.com
+Bundle-Vendor: Horacio Hoyos R
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.workbench,
  org.eclipse.debug.core,
