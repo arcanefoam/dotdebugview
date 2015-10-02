@@ -2,7 +2,6 @@ package com.github.eclipsegraphviz.debugview;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -23,33 +22,38 @@ import org.eclipse.ui.IPartListener2;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartReference;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
+import com.abstratt.graphviz.ui.DOTGraphicalContentProvider;
 import com.abstratt.imageviewer.DefaultGraphicalContentProvider;
 import com.abstratt.imageviewer.GraphicalView;
 
 public class DebugListener implements ISelectionListener, IPartListener2 {
-	
-	private GraphicalView graphvizView; 
+
+	private GraphicalView graphvizView;
+	private boolean selListenerReady;
 
 	private final String GRAPHVIZ_VIEW_PART_ID = "com.abstratt.imageviewer.GraphicalView";
-	private final String DEBUG_VIEW_PART_ID = "org.eclipse.debug.ui.VariableView";
 	public static String JDI_OBJECT_TO_DOT = "toDOT";
+	private final String DEBUG_VIEW_PART_ID = "org.eclipse.debug.ui.VariableView";
 	public final QualifiedName details =  new QualifiedName("com.github.eclipsegraphviz.debugview", "dotString");
 
 	public DebugListener() {
 		super();
 		installViewListener();
+		selListenerReady = false;
 		// The view might be already loaded
 		IWorkbenchPage p = getActivePage();
-		IViewPart view = p.findView(GRAPHVIZ_VIEW_PART_ID);
-		if (view != null) {
-			installSelectionListener();
+		if (p != null) {
+			IViewPart view = p.findView(GRAPHVIZ_VIEW_PART_ID);
+			if (view != null) {
+				graphvizView = (GraphicalView) view;
+				installSelectionListener();
+			}
 		}
 
 	}
@@ -60,66 +64,82 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 	 */
 	private void installViewListener() {
 		IWorkbenchPage p = getActivePage();
-		p.addPartListener(this);
+		if (p != null)
+			p.addPartListener(this);
 
 	}
 
 	private void removeViewListener() {
 		IWorkbenchPage p = getActivePage();
-		p.removePartListener(this);
+		if (p != null)
+			p.removePartListener(this);
 	}
 
 	private void installSelectionListener() {
-		ISelectionService ss = getSelectionService();
-		ss.addSelectionListener(this);
+		if (!selListenerReady) {
+			ISelectionService ss = getSelectionService();
+			if (ss != null) {
+				ss.addSelectionListener(this);
+				System.out.println("Selection Listener installed.");
+				selListenerReady = true;
+			}
+		}
 	}
 
 	private void removeSelectionListener() {
 		ISelectionService ss = getSelectionService();
-		ss.removeSelectionListener(this);
+		if (ss != null)
+			ss.removeSelectionListener(this);
 	}
+
 
 	private void renderDotString(IJavaObject input) {
 		if (graphvizView != null) {
 			final Job job = new Job("Graphviz Debug Query") {
-				
+
 		        protected IStatus run(IProgressMonitor monitor) {
-		        	IJavaThread thread = JDIModelPresentation.getEvaluationThread((IJavaDebugTarget) input.getDebugTarget());
+		        	@SuppressWarnings("restriction")
+					IJavaThread thread = JDIModelPresentation.getEvaluationThread((IJavaDebugTarget) input.getDebugTarget());
 					IJavaValue toStringValue = null;
 					try {
 						toStringValue = input.sendMessage(JDI_OBJECT_TO_DOT, "()Ljava/lang/String;", null, thread, false);
 					} catch (DebugException e) {
 						// Silently ignore exceptions
-						return Status.OK_STATUS;
+						System.out.println(e.getStatus());
+						return Status.CANCEL_STATUS;
 					}
-					try {
-						setProperty(details, toStringValue.getValueString());
-					} catch (DebugException e) {
-						// Silently ignore exceptions
+					if (toStringValue != null) {
+						try {
+							setProperty(details, toStringValue.getValueString());
+						} catch (DebugException e) {
+							// Silently ignore exceptions
+						}
+					} else {
+						return Status.CANCEL_STATUS;
 					}
 					return Status.OK_STATUS;
 		        }
 		     };
 		  job.addJobChangeListener(new JobChangeAdapter() {
 		        public void done(IJobChangeEvent event) {
-		        if (event.getResult().isOK()) {
-		        	syncWithUi(event);
-		        }
-//		        else
-//		        	postError("Job did not complete successfully");
-		        }
+			        if (event.getResult().isOK()) {
+			        	syncWithUi(event);
+			        }
+	//		        else
+	//		        	postError("Job did not complete successfully");
+			        }
 		     });
 		  	job.setSystem(true);
 		  	job.schedule(); // start as soon as possible
 		}
 	}
-	
+
     private void syncWithUi(IJobChangeEvent event) {
 	    Display.getDefault().asyncExec(new Runnable() {
 	    	public void run() {
 	    		graphvizView.setAutoSync(false);
 	        	String dotString = (String) event.getJob().getProperty(details);
-	        	graphvizView.setContents(dotString.getBytes(), new DefaultGraphicalContentProvider());
+	        	graphvizView.setContents(dotString.getBytes(), new DOTGraphicalContentProvider());
 	    	}
 	    });
 
@@ -129,26 +149,45 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 	 * @return
 	 */
 	private ISelectionService getSelectionService() {
-		IWorkbenchWindow w = PlatformUI.getWorkbench().getWorkbenchWindows()[0];
-		ISelectionService ss = w.getSelectionService();
-		return ss;
+		IWorkbenchWindow w = getWorkbenchWindow();
+		if (w != null) {
+			ISelectionService ss = w.getSelectionService();
+			return ss;
+		}
+		return null;
+
 	}
 
 	/**
 	 * @return
 	 */
 	private IWorkbenchPage getActivePage() {
-		IWorkbenchWindow w = PlatformUI.getWorkbench().getWorkbenchWindows()[0];
-		IWorkbenchPage p = w.getActivePage();
-		return p;
+		IWorkbenchWindow w = getWorkbenchWindow();
+		if (w != null) {
+			IWorkbenchPage p = w.getActivePage();
+			return p;
+		}
+		return null;
 	}
 
+	/**
+	 * @return
+	 */
+	private IWorkbenchWindow getWorkbenchWindow() {
+		IWorkbenchWindow[] ws = PlatformUI.getWorkbench().getWorkbenchWindows();
+		if (ws.length > 0) {
+			IWorkbenchWindow w = ws[0];
+			return w;
+		}
+		return null;
+	}
+
+	/**
+	 * We are only interested in selections from the debug view.
+	 */
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-		// We are only interested in debug window selection
-//		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-//		IViewPart view = page.findView(DEBUG_VIEW_PART_ID);
-		if (graphvizView != part)
+		if (!part.getSite().getId().equals(DEBUG_VIEW_PART_ID))
 			return;
 		if (!(selection instanceof IStructuredSelection))
 			return;
@@ -175,19 +214,21 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	@Override
 	public void partActivated(IWorkbenchPartReference partRef) {
-		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
-			graphvizView = (GraphicalView) partRef.getPart(false);
-			installSelectionListener();
-		}
+		if (graphvizView == null)
+			if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+				graphvizView = (GraphicalView) partRef.getPart(false);
+				installSelectionListener();
+			}
 
 	}
 
 	@Override
 	public void partBroughtToTop(IWorkbenchPartReference partRef) {
-		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
-			graphvizView = (GraphicalView) partRef.getPart(false);
-			installSelectionListener();
-		}
+		if (graphvizView == null)
+			if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+				graphvizView = (GraphicalView) partRef.getPart(false);
+				installSelectionListener();
+			}
 
 	}
 
@@ -197,7 +238,7 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 			graphvizView = null;
 			removeSelectionListener();
 		}
-			
+
 	}
 
 	@Override
@@ -207,40 +248,38 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	@Override
 	public void partOpened(IWorkbenchPartReference partRef) {
-		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
-			graphvizView = (GraphicalView) partRef.getPart(false);
-			installSelectionListener();
-		}
-			
+		if (graphvizView == null)
+			if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+				graphvizView = (GraphicalView) partRef.getPart(false);
+				installSelectionListener();
+			}
+
 	}
 
 	@Override
 	public void partHidden(IWorkbenchPartReference partRef) {
 		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
-			graphvizView = (GraphicalView) partRef.getPart(false);
+			graphvizView = null;
 			removeSelectionListener();
 		}
 	}
 
 	@Override
 	public void partVisible(IWorkbenchPartReference partRef) {
-		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
-			graphvizView = (GraphicalView) partRef.getPart(false);
-			installSelectionListener();
-		}
+		if (graphvizView == null)
+			if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
+				graphvizView = (GraphicalView) partRef.getPart(false);
+				installSelectionListener();
+			}
 
 	}
 
 	@Override
 	public void partInputChanged(IWorkbenchPartReference partRef) {
-		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
-			graphvizView = (GraphicalView) partRef.getPart(false);
-			installSelectionListener();
-		}
 	}
 
 	public void dispose() {
-		removeViewListener();
+		graphvizView = null;
 	}
 
 }

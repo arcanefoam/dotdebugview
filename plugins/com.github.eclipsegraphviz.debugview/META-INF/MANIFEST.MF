@@ -12,6 +12,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.jdt.debug,
  org.eclipse.jdt.debug.ui,
  com.abstratt.imageviewer;bundle-version="2.1.201501",
+ com.abstratt.graphviz.ui;bundle-version="2.1.201501",
  org.eclipse.jdt.core
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
