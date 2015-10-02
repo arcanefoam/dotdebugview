@@ -1,4 +1,4 @@
-package com.github.eclipsegraphviz.debugview;
+package arcanebeans.eclipsegraphviz.debugview;
 
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.jdt.core.dom.Message;

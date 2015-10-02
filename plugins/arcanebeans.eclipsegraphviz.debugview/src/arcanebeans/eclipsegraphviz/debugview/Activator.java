@@ -1,4 +1,4 @@
-package com.github.eclipsegraphviz.debugview;
+package arcanebeans.eclipsegraphviz.debugview;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;

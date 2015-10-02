@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature
+      id="arcanebeans.eclipsegraphviz.debugview.feature"
+      label="DOTDebugView-feature"
+      version="1.0.0.qualifier"
+      provider-name="arcanefoam@gmail.com">
+
+   <description>
+      Allows classes that provide a toDOT() method to be rendered into
+the eclipsegraphiz view during debuging. See https://github.com/abstratt/eclipsegraphviz.
+To use the functionality add a method to your class with the
+signature: String toDOT();
+During a debug session, the value returned by that method will
+be used to render a graph in the Eclipse Graphviz view.
+   </description>
+
+   <copyright>
+      Copyright (c) 2015 Horacio Hoyos
+   </copyright>
+
+   <license url="http://www.eclipse.org/legal/epl-v10.html">
+      All rights reserved. This program and the accompanying materials are made available under the terms of the Eclipse Public License v1.0.
+   </license>
+
+   <plugin
+         id="arcanebeans.eclipsegraphviz.debugview"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+</feature>

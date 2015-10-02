@@ -1,4 +1,14 @@
-package com.github.eclipsegraphviz.debugview;
+/*******************************************************************************
+ * Copyright (c) 2015 Horacio Hoyos
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Horacio Hoyos - Initial API and implementation
+ *******************************************************************************/
+package arcanebeans.eclipsegraphviz.debugview;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -29,19 +39,36 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
 import com.abstratt.graphviz.ui.DOTGraphicalContentProvider;
-import com.abstratt.imageviewer.DefaultGraphicalContentProvider;
 import com.abstratt.imageviewer.GraphicalView;
 
+/**
+ * A class that allows classes that provide a toDOT() method to be rendered
+ * into the eclipsegraphiz view during debuging.
+ * @see <a href="https://github.com/abstratt/eclipsegraphviz">Eclipse Graphviz</a>
+ */
 public class DebugListener implements ISelectionListener, IPartListener2 {
 
+	/** The graphviz view. */
 	private GraphicalView graphvizView;
+
+	/** The sel listener ready. */
 	private boolean selListenerReady;
 
+	/** The graphviz view part id. */
 	private final String GRAPHVIZ_VIEW_PART_ID = "com.abstratt.imageviewer.GraphicalView";
+
+	/** The jdi object to dot. */
 	public static String JDI_OBJECT_TO_DOT = "toDOT";
+
+	/** The debug view part id. */
 	private final String DEBUG_VIEW_PART_ID = "org.eclipse.debug.ui.VariableView";
+
+	/** The details. */
 	public final QualifiedName details =  new QualifiedName("com.github.eclipsegraphviz.debugview", "dotString");
 
+	/**
+	 * Instantiates a new debug listener.
+	 */
 	public DebugListener() {
 		super();
 		installViewListener();
@@ -69,12 +96,18 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	}
 
+	/**
+	 * Removes the view listener.
+	 */
 	private void removeViewListener() {
 		IWorkbenchPage p = getActivePage();
 		if (p != null)
 			p.removePartListener(this);
 	}
 
+	/**
+	 * Install selection listener.
+	 */
 	private void installSelectionListener() {
 		if (!selListenerReady) {
 			ISelectionService ss = getSelectionService();
@@ -85,6 +118,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 		}
 	}
 
+	/**
+	 * Removes the selection listener.
+	 */
 	private void removeSelectionListener() {
 		ISelectionService ss = getSelectionService();
 		if (ss != null)
@@ -92,6 +128,11 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 	}
 
 
+	/**
+	 * Render dot string.
+	 *
+	 * @param input the input
+	 */
 	private void renderDotString(IJavaObject input) {
 		if (graphvizView != null) {
 			final Job job = new Job("Graphviz Debug Query") {
@@ -132,6 +173,11 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 		}
 	}
 
+    /**
+     * Sync with ui.
+     *
+     * @param event the event
+     */
     private void syncWithUi(IJobChangeEvent event) {
 	    Display.getDefault().asyncExec(new Runnable() {
 	    	public void run() {
@@ -144,7 +190,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 	  }
 
 	/**
-	 * @return
+	 * Gets the selection service.
+	 *
+	 * @return the selection service
 	 */
 	private ISelectionService getSelectionService() {
 		IWorkbenchWindow w = getWorkbenchWindow();
@@ -157,7 +205,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 	}
 
 	/**
-	 * @return
+	 * Gets the active page.
+	 *
+	 * @return the active page
 	 */
 	private IWorkbenchPage getActivePage() {
 		IWorkbenchWindow w = getWorkbenchWindow();
@@ -169,7 +219,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 	}
 
 	/**
-	 * @return
+	 * Gets the workbench window.
+	 *
+	 * @return the workbench window
 	 */
 	private IWorkbenchWindow getWorkbenchWindow() {
 		IWorkbenchWindow[] ws = PlatformUI.getWorkbench().getWorkbenchWindows();
@@ -182,6 +234,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	/**
 	 * We are only interested in selections from the debug view.
+	 *
+	 * @param part the part
+	 * @param selection the selection
 	 */
 	@Override
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
@@ -210,6 +265,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partActivated(org.eclipse.ui.IWorkbenchPartReference)
+	 */
 	@Override
 	public void partActivated(IWorkbenchPartReference partRef) {
 		if (graphvizView == null)
@@ -220,6 +278,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partBroughtToTop(org.eclipse.ui.IWorkbenchPartReference)
+	 */
 	@Override
 	public void partBroughtToTop(IWorkbenchPartReference partRef) {
 		if (graphvizView == null)
@@ -230,6 +291,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partClosed(org.eclipse.ui.IWorkbenchPartReference)
+	 */
 	@Override
 	public void partClosed(IWorkbenchPartReference partRef) {
 		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
@@ -239,11 +303,17 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partDeactivated(org.eclipse.ui.IWorkbenchPartReference)
+	 */
 	@Override
 	public void partDeactivated(IWorkbenchPartReference partRef) {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partOpened(org.eclipse.ui.IWorkbenchPartReference)
+	 */
 	@Override
 	public void partOpened(IWorkbenchPartReference partRef) {
 		if (graphvizView == null)
@@ -254,6 +324,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partHidden(org.eclipse.ui.IWorkbenchPartReference)
+	 */
 	@Override
 	public void partHidden(IWorkbenchPartReference partRef) {
 		if (partRef.getId().equals(GRAPHVIZ_VIEW_PART_ID)) {
@@ -262,6 +335,9 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partVisible(org.eclipse.ui.IWorkbenchPartReference)
+	 */
 	@Override
 	public void partVisible(IWorkbenchPartReference partRef) {
 		if (graphvizView == null)
@@ -272,10 +348,16 @@ public class DebugListener implements ISelectionListener, IPartListener2 {
 
 	}
 
+	/* (non-Javadoc)
+	 * @see org.eclipse.ui.IPartListener2#partInputChanged(org.eclipse.ui.IWorkbenchPartReference)
+	 */
 	@Override
 	public void partInputChanged(IWorkbenchPartReference partRef) {
 	}
 
+	/**
+	 * Dispose.
+	 */
 	public void dispose() {
 		graphvizView = null;
 	}

@@ -1,17 +1,15 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DOTDebugView
-Bundle-SymbolicName: com.github.eclipsegraphviz.debugview;singleton:=true
-Bundle-Version: 0.1.0.qualifier
-Bundle-Activator: com.github.eclipsegraphviz.debugview.Activator
+Bundle-SymbolicName: arcanebeans.eclipsegraphviz.debugview;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: arcanebeans.eclipsegraphviz.debugview.Activator
 Bundle-Vendor: arcanefoam@gmail.com
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.workbench,
- org.eclipse.jface,
  org.eclipse.debug.core,
  org.eclipse.jdt.debug,
  org.eclipse.jdt.debug.ui,
- com.abstratt.imageviewer;bundle-version="2.1.201501",
  com.abstratt.graphviz.ui;bundle-version="2.1.201501",
  org.eclipse.jdt.core
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
