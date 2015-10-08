@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
       id="arcanebeans.eclipsegraphviz.debugview.feature"
-      label="DOTDebugView-feature"
+      label="DOTDebugView"
       version="1.0.0.qualifier"
-      provider-name="Horacio Hoyos">
+      provider-name="Horacio Hoyos R">
 
    <description>
       Allows classes that provide a toDOT() method to be rendered into
@@ -26,7 +26,7 @@ be used to render a graph in the Eclipse Graphviz view.
          id="arcanebeans.eclipsegraphviz.debugview"
          download-size="0"
          install-size="0"
-         version="0.0.0"
+         version="1.0.0.qualifier"
          unpack="false"/>
 
 </feature>

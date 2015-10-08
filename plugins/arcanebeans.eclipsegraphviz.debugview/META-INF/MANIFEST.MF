@@ -11,6 +11,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.jdt.debug,
  org.eclipse.jdt.debug.ui,
  com.abstratt.graphviz.ui;bundle-version="2.1.201501",
- org.eclipse.jdt.core
+ org.eclipse.jdt.core,
+ org.eclipse.e4.core.services;bundle-version="2.0.0",
+ org.eclipse.debug.ui
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy

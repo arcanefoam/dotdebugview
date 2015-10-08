@@ -1,34 +1,39 @@
 package arcanebeans.eclipsegraphviz.debugview;
 
-import org.osgi.framework.BundleActivator;
+import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
 
-public class Activator implements BundleActivator {
+public class Activator extends Plugin {
 
-	private static BundleContext context;
+	// The plug-in ID
+    public static final String PLUGIN_ID = "arcanebeans.eclipsegraphviz.debugview";
 
-	static BundleContext getContext() {
-		return context;
-	}
+	private static Activator plugin;
+
+	/**
+     * Returns the shared instance
+     *
+     * @return the shared instance
+     */
+    public static Activator getDefault() {
+        return plugin;
+    }
 
 	private DebugListener ls;
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
-	 */
+	@Override
 	public void start(BundleContext bundleContext) throws Exception {
-		Activator.context = bundleContext;
-		ls = new DebugListener();
+		super.start(bundleContext);
+		plugin = this;
+		ls = new DebugListener(getLog());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
-	 */
+	@Override
 	public void stop(BundleContext bundleContext) throws Exception {
-		Activator.context = null;
+		super.stop(bundleContext);
+		plugin = null;
 		ls.dispose();
+		ls = null;
 	}
 
 }
