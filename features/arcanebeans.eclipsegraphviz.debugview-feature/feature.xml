@@ -22,6 +22,10 @@ be used to render a graph in the Eclipse Graphviz view.
       All rights reserved. This program and the accompanying materials are made available under the terms of the Eclipse Public License v1.0.
    </license>
 
+   <url>
+      <update label="DOTDebugView" url="https://bintray.com/arcanefoam/DOTDebugView"/>
+   </url>
+
    <plugin
          id="arcanebeans.eclipsegraphviz.debugview"
          download-size="0"

@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/arcanebeans.eclipsegraphviz.debugview.feature_1.0.0.qualifier.jar" id="arcanebeans.eclipsegraphviz.debugview.feature" version="1.0.0.qualifier"/>
+   <feature url="features/arcanebeans.eclipsegraphviz.debugview.feature_1.0.0.201510081813.jar" id="arcanebeans.eclipsegraphviz.debugview.feature" version="1.0.0.201510081813"/>
 </site>
