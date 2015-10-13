@@ -13,6 +13,7 @@ package arcanebeans.eclipsegraphviz.debugview;
 import org.eclipse.core.runtime.ILog;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Plugin;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.Status;
@@ -118,7 +119,8 @@ public class DebugListener extends Plugin implements IDebugContextListener, ISel
 			if (ss != null) {
 				ss.addSelectionListener(this);
 				selListenerReady = true;
-				logger.log(new Status(Status.INFO, Activator.PLUGIN_ID, "installSelectionListener."));
+				if (Platform.inDebugMode())
+					logger.log(new Status(Status.INFO, Activator.PLUGIN_ID, "installSelectionListener."));
 				IWorkbenchPage p = getActivePage();
 				if (p != null) {
 					IViewPart view = p.findView(DEBUG_VIEW_PART_ID);
@@ -138,7 +140,8 @@ public class DebugListener extends Plugin implements IDebugContextListener, ISel
 		if (ss != null) {
 			selListenerReady = false;
 			ss.removeSelectionListener(this);
-			logger.log(new Status(Status.INFO, Activator.PLUGIN_ID, "removeSelectionListener."));
+			if (Platform.inDebugMode())
+				logger.log(new Status(Status.INFO, Activator.PLUGIN_ID, "removeSelectionListener."));
 			IWorkbenchPage p = getActivePage();
 			if (p != null) {
 				IViewPart view = p.findView(DEBUG_VIEW_PART_ID);
@@ -162,7 +165,8 @@ public class DebugListener extends Plugin implements IDebugContextListener, ISel
 		if (graphvizView != null) {
 			final Job job = new Job("Graphviz Debug Send Message") {
 		        protected IStatus run(IProgressMonitor monitor) {
-		        	logger.log(new Status(Status.INFO, Activator.PLUGIN_ID, "Attempt execute toDOT method."));
+		        	if (Platform.inDebugMode())
+						logger.log(new Status(Status.INFO, Activator.PLUGIN_ID, "Attempt execute toDOT method."));
 		        	IJavaThread ijt = null;
 		        	IJavaDebugTarget target = (IJavaDebugTarget) input.getDebugTarget();
 	    			try {
@@ -214,7 +218,8 @@ public class DebugListener extends Plugin implements IDebugContextListener, ISel
             job.addJobChangeListener(new JobChangeAdapter() {
             	public void done(IJobChangeEvent event) {
             		if (event.getResult().isOK()) {
-            			logger.log(new Status(Status.INFO, Activator.PLUGIN_ID, "Attempt rendering Graph."));
+            			if (Platform.inDebugMode())
+        					logger.log(new Status(Status.INFO, Activator.PLUGIN_ID, "Attempt rendering Graph."));
 			        	syncWithUi(event);
 			        }
 			    }
