@@ -2,13 +2,12 @@
 <feature
       id="arcanebeans.eclipsegraphviz.debugview.feature"
       label="DOTDebugView"
-      version="1.0.0.qualifier"
+      version="1.0.2.qualifier"
       provider-name="Horacio Hoyos R">
 
-   <description>
-      Allows classes that provide a toDOT() method to be rendered into the eclipsegraphiz view during debuging. See https://github.com/abstratt/eclipsegraphviz.
-      To use the functionality add a method to your class with the signature: String toDOT();
-      During a debug session, the value returned by that method will be used to render a graph in the Eclipse Graphviz view.
+   <description url="https://github.com/arcanefoam/dotdebugview">
+      Allows classes that provide a toDOT() method to be rendered into
+the eclipsegraphiz view during debuging.
    </description>
 
    <copyright>
@@ -21,6 +20,7 @@
 
    <url>
       <update label="DOTDebugView" url="https://bintray.com/arcanefoam/DOTDebugView"/>
+      <discovery label="eclipsegraphviz" url="jar:http://repository-textuml.forge.cloudbees.com/snapshot/com/abstratt/mdd/com.abstratt.mdd.oss.repository/2.1/com.abstratt.mdd.oss.repository-2.1.zip!/"/>
    </url>
 
    <plugin

@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: DOTDebugView
 Bundle-SymbolicName: arcanebeans.eclipsegraphviz.debugview;singleton:=true
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 1.0.2.qualifier
 Bundle-Activator: arcanebeans.eclipsegraphviz.debugview.Activator
 Bundle-Vendor: Horacio Hoyos R
 Require-Bundle: org.eclipse.core.runtime,
