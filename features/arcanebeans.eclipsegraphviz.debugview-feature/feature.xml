@@ -27,7 +27,7 @@ the eclipsegraphiz view during debuging.
          id="arcanebeans.eclipsegraphviz.debugview"
          download-size="0"
          install-size="0"
-         version="1.0.0.qualifier"
+         version="1.0.2.qualifier"
          unpack="false"/>
 
 </feature>
